@@ -214,3 +214,4 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
         super.onResume();
         loadRideRequests();
     }
+}
