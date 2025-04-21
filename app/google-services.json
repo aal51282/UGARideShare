@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "407410998297",
+    "firebase_url": "https://uga-ride-share-840de-default-rtdb.firebaseio.com",
+    "project_id": "uga-ride-share-840de",
+    "storage_bucket": "uga-ride-share-840de.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407410998297:android:a161e027561e6754f2be88",
+        "android_client_info": {
+          "package_name": "edu.uga.cs.ugarideshare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWOIk_MPD5dbJBnDr_H4SzwZuhqX5PhxI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
