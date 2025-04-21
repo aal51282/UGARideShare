@@ -1,5 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">UGARideShare</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name">UGA RideShare</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Login and Registration -->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="dont_have_account">Don\'t have an account? Register here</string>
+    <string name="already_have_account">Already have an account? Login here</string>
+
+    <!-- Navigation Menu -->
+    <string name="ride_offers">Ride Offers</string>
+    <string name="ride_requests">Ride Requests</string>
+    <string name="accepted_rides">Accepted Rides</string>
+    <string name="post_offer">Post Ride Offer</string>
+    <string name="post_request">Post Ride Request</string>
+    <string name="account">Account</string>
+    <string name="logout">Logout</string>
+
+    <!-- Ride Forms -->
+    <string name="select_date_time">Select Date and Time</string>
+    <string name="no_date_time">No date/time selected</string>
+    <string name="start_point">Start Point</string>
+    <string name="destination">Destination</string>
+    <string name="post_offer_btn">Post Offer</string>
+    <string name="post_request_btn">Post Request</string>
+    <string name="update_ride">Update Ride</string>
+
+    <!-- Ride Items -->
+    <string name="from">From: %1$s</string>
+    <string name="to">To: %1$s</string>
+    <string name="driver">Driver: %1$s</string>
+    <string name="rider">Rider: %1$s</string>
+    <string name="points">Points: %1$d</string>
+    <string name="status">Status: %1$s</string>
+
+    <!-- Buttons -->
+    <string name="accept">Accept</string>
+    <string name="update">Update</string>
+    <string name="delete">Delete</string>
+    <string name="confirm">Confirm Ride Completed</string>
+
+    <!-- Status Messages -->
+    <string name="no_ride_offers">No ride offers available</string>
+    <string name="no_ride_requests">No ride requests available</string>
+    <string name="no_accepted_rides">No accepted rides</string>
+    <string name="your_confirmed">You have confirmed this ride</string>
+    <string name="awaiting_confirmation">Awaiting your confirmation</string>
+
+    <!-- Success Messages -->
+    <string name="register_success">Registration successful</string>
+    <string name="post_offer_success">Ride offer posted successfully</string>
+    <string name="post_request_success">Ride request posted successfully</string>
+    <string name="update_offer_success">Ride offer updated successfully</string>
+    <string name="update_request_success">Ride request updated successfully</string>
+    <string name="delete_offer_success">Ride offer deleted successfully</string>
+    <string name="delete_request_success">Ride request deleted successfully</string>
+    <string name="accept_offer_success">Ride offer accepted successfully</string>
+    <string name="accept_request_success">Ride request accepted successfully</string>
+    <string name="confirm_success">Ride confirmed, waiting for other party to confirm</string>
+    <string name="ride_complete">Ride completed and points transferred</string>
+
+    <!-- Error Messages -->
+    <string name="email_required">Email is required</string>
+    <string name="email_invalid">Please enter a valid email</string>
+    <string name="password_required">Password is required</string>
+    <string name="password_short">Password must be at least 6 characters</string>
+    <string name="confirm_password_required">Confirm password is required</string>
+    <string name="passwords_dont_match">Passwords don\'t match</string>
+    <string name="select_date_time_required">Please select a date and time</string>
+    <string name="start_point_required">Start point is required</string>
+    <string name="destination_required">Destination is required</string>
+    <string name="invalid_ride_type">Invalid ride type</string>
 </resources>
