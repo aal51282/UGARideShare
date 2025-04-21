@@ -6,15 +6,15 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_ride_offers"
-            android:icon="@drawable/ic_ride_offers"
+            android:icon="@android:drawable/ic_menu_directions"
             android:title="Ride Offers" />
         <item
             android:id="@+id/nav_ride_requests"
-            android:icon="@drawable/ic_ride_requests"
+            android:icon="@android:drawable/ic_menu_search"
             android:title="Ride Requests" />
         <item
             android:id="@+id/nav_accepted_rides"
-            android:icon="@drawable/ic_accepted_rides"
+            android:icon="@android:drawable/ic_menu_agenda"
             android:title="Accepted Rides" />
     </group>
 
@@ -22,15 +22,15 @@
         <menu>
             <item
                 android:id="@+id/nav_post_offer"
-                android:icon="@drawable/ic_add"
+                android:icon="@android:drawable/ic_menu_add"
                 android:title="Post Ride Offer" />
             <item
                 android:id="@+id/nav_post_request"
-                android:icon="@drawable/ic_add"
+                android:icon="@android:drawable/ic_menu_add"
                 android:title="Post Ride Request" />
             <item
                 android:id="@+id/nav_logout"
-                android:icon="@drawable/ic_logout"
+                android:icon="@android:drawable/ic_menu_close_clear_cancel"
                 android:title="Logout" />
         </menu>
     </item>
