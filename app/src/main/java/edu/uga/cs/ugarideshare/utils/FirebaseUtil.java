@@ -535,6 +535,70 @@ public class FirebaseUtil {
     }
 
     /**
+     * Get a ride offer by ID
+     * @param offerId ID of the ride offer to retrieve
+     * @param callback Callback interface to handle success or failure
+     */
+    public static void getRideOfferById(String offerId, final FirebaseCallback<RideOffer> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
+        rideOffersRef.child(offerId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    RideOffer offer = dataSnapshot.getValue(RideOffer.class);
+                    offer.setId(dataSnapshot.getKey());
+                    callback.onSuccess(offer);
+                } else {
+                    callback.onError("Ride offer not found");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error getting ride offer by ID", databaseError.toException());
+                callback.onError(databaseError.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Get a ride request by ID
+     * @param requestId ID of the ride request to retrieve
+     * @param callback Callback interface to handle success or failure
+     */
+    public static void getRideRequestById(String requestId, final FirebaseCallback<RideRequest> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
+        rideRequestsRef.child(requestId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    RideRequest request = dataSnapshot.getValue(RideRequest.class);
+                    request.setId(dataSnapshot.getKey());
+                    callback.onSuccess(request);
+                } else {
+                    callback.onError("Ride request not found");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error getting ride request by ID", databaseError.toException());
+                callback.onError(databaseError.getMessage());
+            }
+        });
+    }
+
+    /**
      * Get the current authenticated user's ID
      * @return User ID or null if not authenticated
      */

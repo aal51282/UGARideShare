@@ -211,26 +211,42 @@ public class UpdateRideActivity extends AppCompatActivity {
      * @param destination Destination of the ride
      */
     private void updateRideOffer(String startPoint, String destination) {
-        // Create a new ride offer with updated values
-        RideOffer updatedOffer = new RideOffer();
-        updatedOffer.setId(rideId);
-        updatedOffer.setDateTime(selectedDateTime.getTimeInMillis());
-        updatedOffer.setStartPoint(startPoint);
-        updatedOffer.setDestination(destination);
-        updatedOffer.setStatus("available");
+        // Show progress bar
+        progressBar.setVisibility(View.VISIBLE);
 
-        // Update ride offer in Firebase
-        FirebaseUtil.updateRideOffer(updatedOffer, new FirebaseCallback<RideOffer>() {
+        // First, get the full ride offer to preserve all its properties
+        FirebaseUtil.getRideOfferById(rideId, new FirebaseCallback<RideOffer>() {
             @Override
-            public void onSuccess(RideOffer result) {
-                // Hide progress bar
-                progressBar.setVisibility(View.GONE);
+            public void onSuccess(RideOffer originalOffer) {
+                // Update only the fields that should be changed
+                originalOffer.setDateTime(selectedDateTime.getTimeInMillis());
+                originalOffer.setStartPoint(startPoint);
+                originalOffer.setDestination(destination);
+                // Make sure we don't change the status or driver info
 
-                // Show success message
-                Toast.makeText(UpdateRideActivity.this, "Ride offer updated successfully", Toast.LENGTH_SHORT).show();
+                // Update ride offer in Firebase
+                FirebaseUtil.updateRideOffer(originalOffer, new FirebaseCallback<RideOffer>() {
+                    @Override
+                    public void onSuccess(RideOffer result) {
+                        // Hide progress bar
+                        progressBar.setVisibility(View.GONE);
 
-                // Finish activity
-                finish();
+                        // Show success message
+                        Toast.makeText(UpdateRideActivity.this, "Ride offer updated successfully", Toast.LENGTH_SHORT).show();
+
+                        // Finish activity
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        // Hide progress bar
+                        progressBar.setVisibility(View.GONE);
+
+                        // Show error message
+                        Toast.makeText(UpdateRideActivity.this, error, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
@@ -239,7 +255,7 @@ public class UpdateRideActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
 
                 // Show error message
-                Toast.makeText(UpdateRideActivity.this, error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(UpdateRideActivity.this, "Failed to retrieve original ride offer: " + error, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -250,26 +266,42 @@ public class UpdateRideActivity extends AppCompatActivity {
      * @param destination Destination of the ride
      */
     private void updateRideRequest(String startPoint, String destination) {
-        // Create a new ride request with updated values
-        RideRequest updatedRequest = new RideRequest();
-        updatedRequest.setId(rideId);
-        updatedRequest.setDateTime(selectedDateTime.getTimeInMillis());
-        updatedRequest.setStartPoint(startPoint);
-        updatedRequest.setDestination(destination);
-        updatedRequest.setStatus("available");
+        // Show progress bar
+        progressBar.setVisibility(View.VISIBLE);
 
-        // Update ride request in Firebase
-        FirebaseUtil.updateRideRequest(updatedRequest, new FirebaseCallback<RideRequest>() {
+        // First, get the full ride request to preserve all its properties
+        FirebaseUtil.getRideRequestById(rideId, new FirebaseCallback<RideRequest>() {
             @Override
-            public void onSuccess(RideRequest result) {
-                // Hide progress bar
-                progressBar.setVisibility(View.GONE);
+            public void onSuccess(RideRequest originalRequest) {
+                // Update only the fields that should be changed
+                originalRequest.setDateTime(selectedDateTime.getTimeInMillis());
+                originalRequest.setStartPoint(startPoint);
+                originalRequest.setDestination(destination);
+                // Make sure we don't change the status or rider info
 
-                // Show success message
-                Toast.makeText(UpdateRideActivity.this, "Ride request updated successfully", Toast.LENGTH_SHORT).show();
+                // Update ride request in Firebase
+                FirebaseUtil.updateRideRequest(originalRequest, new FirebaseCallback<RideRequest>() {
+                    @Override
+                    public void onSuccess(RideRequest result) {
+                        // Hide progress bar
+                        progressBar.setVisibility(View.GONE);
 
-                // Finish activity
-                finish();
+                        // Show success message
+                        Toast.makeText(UpdateRideActivity.this, "Ride request updated successfully", Toast.LENGTH_SHORT).show();
+
+                        // Finish activity
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        // Hide progress bar
+                        progressBar.setVisibility(View.GONE);
+
+                        // Show error message
+                        Toast.makeText(UpdateRideActivity.this, error, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
@@ -278,7 +310,7 @@ public class UpdateRideActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
 
                 // Show error message
-                Toast.makeText(UpdateRideActivity.this, error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(UpdateRideActivity.this, "Failed to retrieve original ride request: " + error, Toast.LENGTH_SHORT).show();
             }
         });
     }
