@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView tvUserEmail;
     private TextView tvUserPoints;
     private ActionBarDrawerToggle toggle;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        progressBar = findViewById(R.id.progressBar);
 
         // Set up the header view
         View headerView = navigationView.getHeaderView(0);
@@ -170,7 +173,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (itemId == R.id.nav_post_offer) {
             intent = new Intent(MainActivity.this, PostRideOfferActivity.class);
         } else if (itemId == R.id.nav_post_request) {
-            intent = new Intent(MainActivity.this, PostRideRequestActivity.class);
+            // Check if user has enough points before allowing them to post a ride request
+            checkPointsAndNavigateToPostRequest();
+            return true; // Return early as we're handling the navigation ourselves
         } else if (itemId == R.id.nav_logout) {
             // Log out user from Firebase Auth
             FirebaseAuth.getInstance().signOut();
@@ -195,6 +200,67 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Close the drawer
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * Check if user has enough points to post a ride request
+     * If yes, navigate to PostRideRequestActivity
+     * If no, show a toast message
+     */
+    private void checkPointsAndNavigateToPostRequest() {
+        // Show progress dialog or indicator
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        // Get user's current points
+        FirebaseUtil.getUserById(sessionManager.getUserId(), new FirebaseCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                // Hide progress
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
+
+                // Define minimum points required to post a ride request
+                int MINIMUM_POINTS_REQUIRED = 50;
+
+                if (user.getRidePoints() >= MINIMUM_POINTS_REQUIRED) {
+                    // User has enough points, navigate to post request activity
+                    Intent intent = new Intent(MainActivity.this, PostRideRequestActivity.class);
+                    startActivity(intent);
+                } else {
+                    // User doesn't have enough points
+                    Toast.makeText(MainActivity.this,
+                            "You need at least " + MINIMUM_POINTS_REQUIRED +
+                                    " points to post a ride request. You currently have " +
+                                    user.getRidePoints() + " points.", Toast.LENGTH_LONG).show();
+
+                    // Suggest posting a ride offer instead
+                    Toast.makeText(MainActivity.this,
+                            "Try posting a ride offer to earn points!",
+                            Toast.LENGTH_SHORT).show();
+                }
+
+                // Close the drawer
+                drawer.closeDrawer(GravityCompat.START);
+            }
+
+            @Override
+            public void onError(String error) {
+                // Hide progress
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
+
+                // Show error message
+                Toast.makeText(MainActivity.this,
+                        "Error checking points: " + error, Toast.LENGTH_SHORT).show();
+
+                // Close the drawer
+                drawer.closeDrawer(GravityCompat.START);
+            }
+        });
     }
 
     /**
