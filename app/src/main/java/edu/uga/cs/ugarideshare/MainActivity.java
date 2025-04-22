@@ -10,25 +10,31 @@ import androidx.fragment.app.Fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 import edu.uga.cs.ugarideshare.fragments.AcceptedRidesFragment;
 import edu.uga.cs.ugarideshare.fragments.RideOffersFragment;
 import edu.uga.cs.ugarideshare.fragments.RideRequestsFragment;
+import edu.uga.cs.ugarideshare.utils.FirebaseUtil;
 import edu.uga.cs.ugarideshare.utils.SessionManager;
 
 /**
  * Main activity for the app, contains navigation drawer and hosts fragments.
  */
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+    private static final String TAG = "MainActivity";
     private DrawerLayout drawer;
     private NavigationView navigationView;
     private SessionManager sessionManager;
     private TextView tvUserEmail;
+    private ActionBarDrawerToggle toggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +56,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // Ensure home button is enabled
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+        }
+
         // Set up drawer
         drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
@@ -61,7 +73,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         tvUserEmail.setText(sessionManager.getUserEmail());
 
         // Set up drawer toggle
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+        toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
@@ -71,8 +84,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new RideOffersFragment()).commit();
             navigationView.setCheckedItem(R.id.nav_ride_offers);
-            getSupportActionBar().setTitle("Ride Offers");
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Ride Offers");
+            }
         }
+
+        // Add a click listener to the toolbar to open the drawer
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawer.openDrawer(GravityCompat.START);
+            }
+        });
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred
+        toggle.syncState();
     }
 
     /**
@@ -80,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        Log.d(TAG, "Navigation item selected: " + item.getTitle());
         Fragment selectedFragment = null;
         Intent intent = null;
 
@@ -87,20 +118,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int itemId = item.getItemId();
         if (itemId == R.id.nav_ride_offers) {
             selectedFragment = new RideOffersFragment();
-            getSupportActionBar().setTitle("Ride Offers");
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Ride Offers");
+            }
         } else if (itemId == R.id.nav_ride_requests) {
             selectedFragment = new RideRequestsFragment();
-            getSupportActionBar().setTitle("Ride Requests");
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Ride Requests");
+            }
         } else if (itemId == R.id.nav_accepted_rides) {
             selectedFragment = new AcceptedRidesFragment();
-            getSupportActionBar().setTitle("Accepted Rides");
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Accepted Rides");
+            }
         } else if (itemId == R.id.nav_post_offer) {
             intent = new Intent(MainActivity.this, PostRideOfferActivity.class);
         } else if (itemId == R.id.nav_post_request) {
             intent = new Intent(MainActivity.this, PostRideRequestActivity.class);
         } else if (itemId == R.id.nav_logout) {
-            // Log out user
+            // Log out user from Firebase Auth
+            FirebaseAuth.getInstance().signOut();
+
+            // Log out user from session
             sessionManager.logout();
+
+            // Redirect to login screen
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
             return true;
@@ -117,6 +159,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Close the drawer
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * Handle options menu item selection
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle navigation toggle when clicked
+        if (toggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        // Handle other menu items
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -138,5 +194,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         // We don't need to save state here as the navigation drawer handles the state
+    }
+
+    /**
+     * Helper method to manually open the drawer - useful for debugging
+     */
+    private void openDrawer() {
+        drawer.openDrawer(GravityCompat.START);
+        Toast.makeText(this, "Opening drawer", Toast.LENGTH_SHORT).show();
     }
 }
