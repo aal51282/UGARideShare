@@ -22,6 +22,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import edu.uga.cs.ugarideshare.fragments.AcceptedRidesFragment;
 import edu.uga.cs.ugarideshare.fragments.RideOffersFragment;
 import edu.uga.cs.ugarideshare.fragments.RideRequestsFragment;
+import edu.uga.cs.ugarideshare.models.User;
+import edu.uga.cs.ugarideshare.utils.FirebaseCallback;
 import edu.uga.cs.ugarideshare.utils.FirebaseUtil;
 import edu.uga.cs.ugarideshare.utils.SessionManager;
 
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private NavigationView navigationView;
     private SessionManager sessionManager;
     private TextView tvUserEmail;
+    private TextView tvUserPoints;
     private ActionBarDrawerToggle toggle;
 
     @Override
@@ -70,7 +73,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Set up the header view
         View headerView = navigationView.getHeaderView(0);
         tvUserEmail = headerView.findViewById(R.id.tvUserEmail);
+        tvUserPoints = headerView.findViewById(R.id.tvUserPoints);
+
+        // Set user email
         tvUserEmail.setText(sessionManager.getUserEmail());
+
+        // Update points display
+        updatePointsDisplay();
 
         // Set up drawer toggle
         toggle = new ActionBarDrawerToggle(
@@ -96,6 +105,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 drawer.openDrawer(GravityCompat.START);
             }
         });
+    }
+
+    /**
+     * Update the points display in the navigation header
+     */
+    private void updatePointsDisplay() {
+        FirebaseUtil.getUserById(sessionManager.getUserId(), new FirebaseCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                // Update the points display
+                tvUserPoints.setText("Points: " + user.getRidePoints());
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Error getting user points: " + error);
+                // Default points display in case of error
+                tvUserPoints.setText("Points: --");
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh points when returning to the activity
+        updatePointsDisplay();
     }
 
     @Override
