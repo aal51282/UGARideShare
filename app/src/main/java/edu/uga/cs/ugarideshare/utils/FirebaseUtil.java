@@ -1,27 +1,35 @@
 package edu.uga.cs.ugarideshare.utils;
 
+import android.util.Log;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.uga.cs.ugarideshare.models.User;
+import edu.uga.cs.ugarideshare.models.AcceptedRide;
 import edu.uga.cs.ugarideshare.models.RideOffer;
 import edu.uga.cs.ugarideshare.models.RideRequest;
-import edu.uga.cs.ugarideshare.models.AcceptedRide;
+import edu.uga.cs.ugarideshare.models.User;
 
 /**
  * FirebaseUtil provides methods for interacting with Firebase Realtime Database.
  */
 public class FirebaseUtil {
-    private static final DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+    private static final String TAG = "FirebaseUtil";
 
-    // References to different database nodes
+    // Firebase Authentication instance
+    private static final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+    // Firebase Database references
+    private static final DatabaseReference database = FirebaseDatabase.getInstance().getReference();
     private static final DatabaseReference usersRef = database.child("users");
     private static final DatabaseReference rideOffersRef = database.child("rideOffers");
     private static final DatabaseReference rideRequestsRef = database.child("rideRequests");
@@ -33,28 +41,36 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void registerUser(User user, final FirebaseCallback<User> callback) {
-        // Check if email already exists
-        usersRef.orderByChild("email").equalTo(user.getEmail()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    // Email already exists
-                    callback.onError("Email already registered");
-                } else {
-                    // Email doesn't exist, create new user
-                    String userId = usersRef.push().getKey();
+        // First, create the user in Firebase Authentication
+        firebaseAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword())
+                .addOnSuccessListener(authResult -> {
+                    // Get the UID assigned by Firebase Auth
+                    String userId = authResult.getUser().getUid();
                     user.setId(userId);
-                    usersRef.child(userId).setValue(user)
-                            .addOnSuccessListener(aVoid -> callback.onSuccess(user))
-                            .addOnFailureListener(e -> callback.onError(e.getMessage()));
-                }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                callback.onError(databaseError.getMessage());
-            }
-        });
+                    // Save user's password temporarily for login
+                    String tempPassword = user.getPassword();
+
+                    // For security, don't store the password in the database
+                    user.setPassword(""); // Clear password before storing in database
+
+                    // Create the user in the database
+                    usersRef.child(userId).setValue(user)
+                            .addOnSuccessListener(aVoid -> {
+                                // Restore password for the callback
+                                // (needed for session management but not stored in DB)
+                                user.setPassword(tempPassword);
+                                callback.onSuccess(user);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to save user to database", e);
+                                callback.onError(e.getMessage());
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to create user with authentication", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -64,33 +80,43 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void loginUser(String email, String password, final FirebaseCallback<User> callback) {
-        usersRef.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    boolean userFound = false;
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        User user = snapshot.getValue(User.class);
-                        user.setId(snapshot.getKey());
-                        if (user.getPassword().equals(password)) {
-                            callback.onSuccess(user);
-                            userFound = true;
-                            break;
-                        }
-                    }
-                    if (!userFound) {
-                        callback.onError("Invalid email/password combination");
-                    }
-                } else {
-                    callback.onError("User not found");
-                }
-            }
+        // Authenticate with Firebase Auth
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    // Get user ID from authentication
+                    String userId = authResult.getUser().getUid();
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                callback.onError(databaseError.getMessage());
-            }
-        });
+                    // Get user data from database
+                    usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.exists()) {
+                                User user = dataSnapshot.getValue(User.class);
+                                user.setId(userId);
+
+                                // Set the password for session management
+                                // (Note: password isn't stored in DB but needed for local use)
+                                user.setPassword(password);
+
+                                callback.onSuccess(user);
+                            } else {
+                                // User exists in Auth but not in Database (rare case)
+                                Log.w(TAG, "User authenticated but not found in database");
+                                callback.onError("User profile not found");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Log.e(TAG, "Database error during login", databaseError.toException());
+                            callback.onError(databaseError.getMessage());
+                        }
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Authentication failed", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -98,6 +124,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void getAvailableRideOffers(final FirebaseCallback<List<RideOffer>> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         rideOffersRef.orderByChild("status").equalTo("available").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -112,6 +144,7 @@ public class FirebaseUtil {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error fetching ride offers", databaseError.toException());
                 callback.onError(databaseError.getMessage());
             }
         });
@@ -122,6 +155,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void getAvailableRideRequests(final FirebaseCallback<List<RideRequest>> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         rideRequestsRef.orderByChild("status").equalTo("available").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -136,6 +175,7 @@ public class FirebaseUtil {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error fetching ride requests", databaseError.toException());
                 callback.onError(databaseError.getMessage());
             }
         });
@@ -147,6 +187,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void getAcceptedRidesForUser(String userId, final FirebaseCallback<List<AcceptedRide>> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         acceptedRidesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -163,6 +209,7 @@ public class FirebaseUtil {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error fetching accepted rides", databaseError.toException());
                 callback.onError(databaseError.getMessage());
             }
         });
@@ -174,11 +221,20 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void postRideOffer(RideOffer offer, final FirebaseCallback<RideOffer> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         String offerId = rideOffersRef.push().getKey();
         offer.setId(offerId);
         rideOffersRef.child(offerId).setValue(offer)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(offer))
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to post ride offer", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -187,11 +243,20 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void postRideRequest(RideRequest request, final FirebaseCallback<RideRequest> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         String requestId = rideRequestsRef.push().getKey();
         request.setId(requestId);
         rideRequestsRef.child(requestId).setValue(request)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(request))
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to post ride request", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -200,9 +265,18 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void updateRideOffer(RideOffer offer, final FirebaseCallback<RideOffer> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         rideOffersRef.child(offer.getId()).setValue(offer)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(offer))
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update ride offer", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -211,9 +285,18 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void updateRideRequest(RideRequest request, final FirebaseCallback<RideRequest> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         rideRequestsRef.child(request.getId()).setValue(request)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(request))
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update ride request", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -222,9 +305,18 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void deleteRideOffer(String offerId, final FirebaseCallback<Boolean> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         rideOffersRef.child(offerId).removeValue()
                 .addOnSuccessListener(aVoid -> callback.onSuccess(true))
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to delete ride offer", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -233,9 +325,18 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void deleteRideRequest(String requestId, final FirebaseCallback<Boolean> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         rideRequestsRef.child(requestId).removeValue()
                 .addOnSuccessListener(aVoid -> callback.onSuccess(true))
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to delete ride request", e);
+                    callback.onError(e.getMessage());
+                });
     }
 
     /**
@@ -246,6 +347,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void acceptRideOffer(RideOffer offer, String riderId, String riderEmail, final FirebaseCallback<AcceptedRide> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         // Update the offer status to accepted
         offer.acceptRide(riderId, riderEmail);
         rideOffersRef.child(offer.getId()).setValue(offer).addOnSuccessListener(aVoid -> {
@@ -257,8 +364,14 @@ public class FirebaseUtil {
             // Save the accepted ride to Firebase
             acceptedRidesRef.child(rideId).setValue(acceptedRide)
                     .addOnSuccessListener(aVoid2 -> callback.onSuccess(acceptedRide))
-                    .addOnFailureListener(e -> callback.onError(e.getMessage()));
-        }).addOnFailureListener(e -> callback.onError(e.getMessage()));
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to save accepted ride", e);
+                        callback.onError(e.getMessage());
+                    });
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Failed to update ride offer status", e);
+            callback.onError(e.getMessage());
+        });
     }
 
     /**
@@ -269,6 +382,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void acceptRideRequest(RideRequest request, String driverId, String driverEmail, final FirebaseCallback<AcceptedRide> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         // Update the request status to accepted
         request.acceptRequest(driverId, driverEmail);
         rideRequestsRef.child(request.getId()).setValue(request).addOnSuccessListener(aVoid -> {
@@ -280,8 +399,14 @@ public class FirebaseUtil {
             // Save the accepted ride to Firebase
             acceptedRidesRef.child(rideId).setValue(acceptedRide)
                     .addOnSuccessListener(aVoid2 -> callback.onSuccess(acceptedRide))
-                    .addOnFailureListener(e -> callback.onError(e.getMessage()));
-        }).addOnFailureListener(e -> callback.onError(e.getMessage()));
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to save accepted ride", e);
+                        callback.onError(e.getMessage());
+                    });
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Failed to update ride request status", e);
+            callback.onError(e.getMessage());
+        });
     }
 
     /**
@@ -291,6 +416,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void confirmRide(AcceptedRide ride, boolean isDriver, final FirebaseCallback<Boolean> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         // Update the ride confirmation status
         if (isDriver) {
             ride.setDriverConfirmed(true);
@@ -306,7 +437,10 @@ public class FirebaseUtil {
             } else {
                 callback.onSuccess(true);
             }
-        }).addOnFailureListener(e -> callback.onError(e.getMessage()));
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Failed to update ride confirmation status", e);
+            callback.onError(e.getMessage());
+        });
     }
 
     /**
@@ -343,11 +477,15 @@ public class FirebaseUtil {
                             // Remove ride from accepted rides
                             acceptedRidesRef.child(ride.getId()).removeValue()
                                     .addOnSuccessListener(aVoid -> callback.onSuccess(true))
-                                    .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                                    .addOnFailureListener(e -> {
+                                        Log.e(TAG, "Failed to remove completed ride", e);
+                                        callback.onError(e.getMessage());
+                                    });
                         }
 
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
+                            Log.e(TAG, "Database error getting driver data", databaseError.toException());
                             callback.onError(databaseError.getMessage());
                         }
                     });
@@ -358,6 +496,7 @@ public class FirebaseUtil {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error getting rider data", databaseError.toException());
                 callback.onError(databaseError.getMessage());
             }
         });
@@ -369,6 +508,12 @@ public class FirebaseUtil {
      * @param callback Callback interface to handle success or failure
      */
     public static void getUserById(String userId, final FirebaseCallback<User> callback) {
+        // Check if user is authenticated
+        if (firebaseAuth.getCurrentUser() == null) {
+            callback.onError("User not authenticated");
+            return;
+        }
+
         usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -383,8 +528,25 @@ public class FirebaseUtil {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database error getting user by ID", databaseError.toException());
                 callback.onError(databaseError.getMessage());
             }
         });
+    }
+
+    /**
+     * Get the current authenticated user's ID
+     * @return User ID or null if not authenticated
+     */
+    public static String getCurrentUserId() {
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        return currentUser != null ? currentUser.getUid() : null;
+    }
+
+    /**
+     * Sign out the current user
+     */
+    public static void signOut() {
+        firebaseAuth.signOut();
     }
 }
