@@ -11,8 +11,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.uga.cs.ugarideshare.models.AcceptedRide;
 import edu.uga.cs.ugarideshare.models.RideOffer;
@@ -34,6 +37,9 @@ public class FirebaseUtil {
     private static final DatabaseReference rideOffersRef = database.child("rideOffers");
     private static final DatabaseReference rideRequestsRef = database.child("rideRequests");
     private static final DatabaseReference acceptedRidesRef = database.child("acceptedRides");
+
+    // Map to store points update listeners
+    private static final Map<String, List<Object>> pointsListeners = new HashMap<>();
 
     /**
      * Register a new user in Firebase
@@ -596,6 +602,72 @@ public class FirebaseUtil {
                 callback.onError(databaseError.getMessage());
             }
         });
+    }
+
+    /**
+     * Add a listener to be notified when a user's points change
+     * @param userId ID of the user to listen for point changes
+     * @param listener Listener to be notified
+     */
+    public static void addPointsUpdateListener(String userId, Object listener) {
+        if (!pointsListeners.containsKey(userId)) {
+            pointsListeners.put(userId, new ArrayList<>());
+
+            // Add a real-time listener for this user's points
+            usersRef.child(userId).child("ridePoints").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        Integer points = dataSnapshot.getValue(Integer.class);
+                        if (points != null) {
+                            // Notify all listeners for this user
+                            notifyPointsListeners(userId, points);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, "Database error listening for points updates", databaseError.toException());
+                }
+            });
+        }
+
+        // Add this listener to the list
+        pointsListeners.get(userId).add(listener);
+    }
+
+    /**
+     * Remove a points update listener
+     * @param userId ID of the user
+     * @param listener Listener to remove
+     */
+    public static void removePointsUpdateListener(String userId, Object listener) {
+        if (pointsListeners.containsKey(userId)) {
+            pointsListeners.get(userId).remove(listener);
+
+            // If no more listeners for this user, we could remove the Firebase listener too
+            // But for simplicity, we'll keep it active
+        }
+    }
+
+    /**
+     * Notify all listeners for a user about points changes
+     * @param userId ID of the user
+     * @param points New points value
+     */
+    private static void notifyPointsListeners(String userId, int points) {
+        if (pointsListeners.containsKey(userId)) {
+            for (Object listener : pointsListeners.get(userId)) {
+                try {
+                    // Use reflection to call the onPointsUpdated method
+                    Method method = listener.getClass().getMethod("onPointsUpdated", int.class);
+                    method.invoke(listener, points);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error notifying points listener", e);
+                }
+            }
+        }
     }
 
     /**

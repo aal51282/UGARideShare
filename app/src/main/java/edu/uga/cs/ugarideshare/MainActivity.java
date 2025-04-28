@@ -40,6 +40,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView tvUserPoints;
     private ActionBarDrawerToggle toggle;
     private ProgressBar progressBar;
+    private PointsUpdateListener pointsUpdateListener;
+
+    /**
+     * Interface for listening to points updates
+     */
+    private interface PointsUpdateListener {
+        void onPointsUpdated(int newPoints);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +92,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Update points display
         updatePointsDisplay();
 
+        // Register for points updates
+        registerPointsUpdateListener();
+
         // Set up drawer toggle
         toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar,
@@ -111,6 +122,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     /**
+     * Register a listener for points updates
+     */
+    private void registerPointsUpdateListener() {
+        String userId = sessionManager.getUserId();
+        if (userId != null) {
+            pointsUpdateListener = new PointsUpdateListener() {
+                @Override
+                public void onPointsUpdated(int newPoints) {
+                    // Update the points display in the UI
+                    if (tvUserPoints != null) {
+                        runOnUiThread(() -> {
+                            tvUserPoints.setText("Points: " + newPoints);
+                        });
+                    }
+                }
+            };
+            FirebaseUtil.addPointsUpdateListener(userId, pointsUpdateListener);
+        }
+    }
+
+    /**
      * Update the points display in the navigation header
      */
     private void updatePointsDisplay() {
@@ -135,6 +167,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onResume();
         // Refresh points when returning to the activity
         updatePointsDisplay();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up points listener
+        if (pointsUpdateListener != null) {
+            FirebaseUtil.removePointsUpdateListener(sessionManager.getUserId(), pointsUpdateListener);
+        }
     }
 
     @Override
