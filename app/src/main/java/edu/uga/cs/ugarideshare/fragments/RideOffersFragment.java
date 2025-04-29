@@ -40,6 +40,18 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
     private TextView tvNoOffers;
     private SessionManager sessionManager;
 
+    /**
+     * Create a new instance of the fragment.
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     * @return Return the View for the fragment's UI, or null.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -65,7 +77,7 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
         loadRideOffers();
 
         return view;
-    }
+    } // onCreateView
 
     /**
      * Load ride offers from Firebase.
@@ -111,7 +123,7 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    } // loadRideOffers
 
     /**
      * Handle ride offer accept button click.
@@ -150,7 +162,7 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    } // onAcceptClick
 
     /**
      * Handle ride offer update button click.
@@ -165,7 +177,7 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
         intent.putExtra(UpdateRideActivity.EXTRA_RIDE_START, rideOffer.getStartPoint());
         intent.putExtra(UpdateRideActivity.EXTRA_RIDE_DESTINATION, rideOffer.getDestination());
         startActivity(intent);
-    }
+    } // onUpdateClick
 
     /**
      * Handle ride offer delete button click.
@@ -193,7 +205,7 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
                 if (rideOffers.isEmpty()) {
                     tvNoOffers.setVisibility(View.VISIBLE);
                 }
-            }
+            } // onSuccess
 
             @Override
             public void onError(String error) {
@@ -202,9 +214,9 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
 
                 // Show error message
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
-            }
+            } // onError
         });
-    }
+    } // onDeleteClick
 
     /**
      * Reload ride offers when fragment resumes.
@@ -213,5 +225,5 @@ public class RideOffersFragment extends Fragment implements RideOfferAdapter.OnR
     public void onResume() {
         super.onResume();
         loadRideOffers();
-    }
-}
+    } // onResume
+} // RideOffersFragment

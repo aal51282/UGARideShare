@@ -18,7 +18,7 @@ import edu.uga.cs.ugarideshare.utils.FirebaseUtil;
 import edu.uga.cs.ugarideshare.utils.SessionManager;
 
 /**
- * Activity for user login.
+ * Activity for user login. Handles user authentication and session management.
  */
 public class LoginActivity extends AppCompatActivity {
     private EditText etEmail, etPassword;
@@ -27,6 +27,9 @@ public class LoginActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private SessionManager sessionManager;
 
+    /**
+     * Set up the activity.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

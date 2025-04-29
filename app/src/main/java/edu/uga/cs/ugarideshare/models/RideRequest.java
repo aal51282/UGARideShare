@@ -21,7 +21,7 @@ public class RideRequest {
      */
     public RideRequest() {
         // Required empty constructor for Firebase
-    }
+    } // RideRequest Constructor
 
     /**
      * Constructor to create a new ride request
@@ -38,7 +38,7 @@ public class RideRequest {
         this.startPoint = startPoint;
         this.destination = destination;
         this.status = "available";
-    }
+    } // RideRequest Constructor
 
     // Getters and setters
     public String getId() {
@@ -127,7 +127,7 @@ public class RideRequest {
             return true;
         }
         return false;
-    }
+    } // acceptRequest
 
     /**
      * Get formatted date and time string
@@ -137,6 +137,10 @@ public class RideRequest {
         return new Date(dateTime).toString();
     }
 
+    /**
+     * Get a string representation of the ride request
+     * @return String representation of the ride request
+     */
     @Override
     public String toString() {
         return "RideRequest{" +
@@ -147,5 +151,5 @@ public class RideRequest {
                 ", destination='" + destination + '\'' +
                 ", status='" + status + '\'' +
                 '}';
-    }
-}
+    } // toString
+} // RideRequest

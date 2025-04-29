@@ -49,6 +49,12 @@ public class AcceptedRideAdapter extends RecyclerView.Adapter<AcceptedRideAdapte
         this.dateFormatter = new SimpleDateFormat("EEEE, MMMM d, yyyy 'at' h:mm a", Locale.US);
     }
 
+    /**
+     * Create a new ViewHolder for accepted ride items.
+     * @param parent Parent view group
+     * @param viewType View type
+     * @return New ViewHolder
+     */
     @NonNull
     @Override
     public AcceptedRideViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -56,12 +62,21 @@ public class AcceptedRideAdapter extends RecyclerView.Adapter<AcceptedRideAdapte
         return new AcceptedRideViewHolder(view);
     }
 
+    /**
+     * Bind data to the ViewHolder.
+     * @param holder ViewHolder
+     * @param position Position in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull AcceptedRideViewHolder holder, int position) {
         AcceptedRide acceptedRide = acceptedRides.get(position);
         holder.bind(acceptedRide);
     }
 
+    /**
+     * Get the number of accepted rides.
+     * @return Number of accepted rides
+     */
     @Override
     public int getItemCount() {
         return acceptedRides.size();
@@ -74,6 +89,10 @@ public class AcceptedRideAdapter extends RecyclerView.Adapter<AcceptedRideAdapte
         private TextView tvDateTime, tvStartPoint, tvDestination, tvRider, tvDriver, tvPoints, tvStatus;
         private Button btnConfirm;
 
+        /**
+         * Constructor for AcceptedRideViewHolder.
+         * @param itemView View for the item
+         */
         public AcceptedRideViewHolder(@NonNull View itemView) {
             super(itemView);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
@@ -129,6 +148,6 @@ public class AcceptedRideAdapter extends RecyclerView.Adapter<AcceptedRideAdapte
                     listener.onConfirmClick(acceptedRide);
                 }
             });
-        }
-    }
-}
+        } // bind
+    } // AcceptedRideViewHolder
+} // AcceptedRideAdapter

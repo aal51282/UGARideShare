@@ -51,6 +51,12 @@ public class RideOfferAdapter extends RecyclerView.Adapter<RideOfferAdapter.Ride
         this.dateFormatter = new SimpleDateFormat("EEEE, MMMM d, yyyy 'at' h:mm a", Locale.US);
     }
 
+    /**
+     * Create a new ViewHolder for a ride offer item.
+     * @param parent Parent view group
+     * @param viewType View type
+     * @return RideOfferViewHolder
+     */
     @NonNull
     @Override
     public RideOfferViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -58,12 +64,21 @@ public class RideOfferAdapter extends RecyclerView.Adapter<RideOfferAdapter.Ride
         return new RideOfferViewHolder(view);
     }
 
+    /**
+     * Bind data to a ViewHolder for a ride offer item.
+     * @param holder ViewHolder
+     * @param position Position in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull RideOfferViewHolder holder, int position) {
         RideOffer rideOffer = rideOffers.get(position);
         holder.bind(rideOffer);
     }
 
+    /**
+     * Get the number of ride offers.
+     * @return Number of ride offers
+     */
     @Override
     public int getItemCount() {
         return rideOffers.size();
@@ -76,6 +91,10 @@ public class RideOfferAdapter extends RecyclerView.Adapter<RideOfferAdapter.Ride
         private TextView tvDateTime, tvStartPoint, tvDestination, tvDriver;
         private Button btnAccept, btnUpdate, btnDelete;
 
+        /**
+         * Constructor for RideOfferViewHolder.
+         * @param itemView View for the item
+         */
         public RideOfferViewHolder(@NonNull View itemView) {
             super(itemView);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
@@ -125,6 +144,6 @@ public class RideOfferAdapter extends RecyclerView.Adapter<RideOfferAdapter.Ride
                     listener.onDeleteClick(rideOffer);
                 }
             });
-        }
-    }
-}
+        } // bind
+    } // RideOfferViewHolder
+} // RideOfferAdapter

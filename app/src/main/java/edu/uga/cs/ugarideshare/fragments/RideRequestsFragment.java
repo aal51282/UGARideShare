@@ -40,6 +40,18 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
     private TextView tvNoRequests;
     private SessionManager sessionManager;
 
+    /**
+     * Create a new instance of the fragment.
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     * @return Return the View for the fragment's UI, or null.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -65,7 +77,7 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
         loadRideRequests();
 
         return view;
-    }
+    } // onCreateView
 
     /**
      * Load ride requests from Firebase.
@@ -109,9 +121,9 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
 
                 // Show error message
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
-            }
+            } // onError
         });
-    }
+    } // loadRideRequests
 
     /**
      * Handle ride request accept button click.
@@ -148,9 +160,9 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
 
                 // Show error message
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
-            }
+            } // onError
         });
-    }
+    } // onAcceptClick
 
     /**
      * Handle ride request update button click.
@@ -165,7 +177,7 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
         intent.putExtra(UpdateRideActivity.EXTRA_RIDE_START, rideRequest.getStartPoint());
         intent.putExtra(UpdateRideActivity.EXTRA_RIDE_DESTINATION, rideRequest.getDestination());
         startActivity(intent);
-    }
+    } // onUpdateClick
 
     /**
      * Handle ride request delete button click.
@@ -193,7 +205,7 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
                 if (rideRequests.isEmpty()) {
                     tvNoRequests.setVisibility(View.VISIBLE);
                 }
-            }
+            } // onSuccess
 
             @Override
             public void onError(String error) {
@@ -202,9 +214,9 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
 
                 // Show error message
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
-            }
+            } // onError
         });
-    }
+    } // onDeleteClick
 
     /**
      * Reload ride requests when fragment resumes.
@@ -213,5 +225,5 @@ public class RideRequestsFragment extends Fragment implements RideRequestAdapter
     public void onResume() {
         super.onResume();
         loadRideRequests();
-    }
-}
+    } // onResume
+} // RideRequestsFragment

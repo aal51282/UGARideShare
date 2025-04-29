@@ -82,6 +82,10 @@ public class User {
         return false;
     }
 
+    /**
+     * Convert the user object to a JSON string
+     * @return JSON string representation of the user
+     */
     @Override
     public String toString() {
         return "User{" +
@@ -89,5 +93,5 @@ public class User {
                 ", email='" + email + '\'' +
                 ", ridePoints=" + ridePoints +
                 '}';
-    }
-}
+    } // toString
+} // User

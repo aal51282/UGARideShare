@@ -37,6 +37,18 @@ public class AcceptedRidesFragment extends Fragment implements AcceptedRideAdapt
     private TextView tvNoRides;
     private SessionManager sessionManager;
 
+    /**
+     * Called to have the fragment instantiate its user interface view.
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     * @return Return the View for the fragment's UI, or null.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -108,7 +120,7 @@ public class AcceptedRidesFragment extends Fragment implements AcceptedRideAdapt
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    } // loadAcceptedRides
 
     /**
      * Handle confirm button click.
@@ -149,7 +161,7 @@ public class AcceptedRidesFragment extends Fragment implements AcceptedRideAdapt
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    } // onConfirmClick
 
     /**
      * Reload accepted rides when fragment resumes.
@@ -158,5 +170,5 @@ public class AcceptedRidesFragment extends Fragment implements AcceptedRideAdapt
     public void onResume() {
         super.onResume();
         loadAcceptedRides();
-    }
-}
+    } // onResume
+} // AcceptedRidesFragment

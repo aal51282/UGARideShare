@@ -51,6 +51,12 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
         this.dateFormatter = new SimpleDateFormat("EEEE, MMMM d, yyyy 'at' h:mm a", Locale.US);
     }
 
+    /**
+     * Create a new RideRequestViewHolder.
+     * @param parent Parent view group
+     * @param viewType View type
+     * @return New RideRequestViewHolder
+     */
     @NonNull
     @Override
     public RideRequestViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -58,16 +64,25 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
         return new RideRequestViewHolder(view);
     }
 
+    /**
+     * Bind data to a RideRequestViewHolder.
+     * @param holder RideRequestViewHolder to bind data to
+     * @param position Position of the item in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull RideRequestViewHolder holder, int position) {
         RideRequest rideRequest = rideRequests.get(position);
         holder.bind(rideRequest);
     }
 
+    /**
+     * Get the number of items in the list.
+     * @return Number of items
+     */
     @Override
     public int getItemCount() {
         return rideRequests.size();
-    }
+    } // getItemCount
 
     /**
      * ViewHolder for ride request items.
@@ -85,7 +100,7 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
             btnAccept = itemView.findViewById(R.id.btnAccept);
             btnUpdate = itemView.findViewById(R.id.btnUpdate);
             btnDelete = itemView.findViewById(R.id.btnDelete);
-        }
+        } // Constructor
 
         /**
          * Bind data to views.
@@ -125,6 +140,6 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
                     listener.onDeleteClick(rideRequest);
                 }
             });
-        }
-    }
-}
+        } // bind
+    } // RideRequestViewHolder
+} // RideRequestAdapter
