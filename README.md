@@ -1,4 +1,4 @@
-# RideShare
+# Rideshare Mobile Application
 
 A ride-sharing Android application designed for users to offer and request rides in their local area.
 
